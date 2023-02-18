@@ -1,4 +1,4 @@
-name: "Terraform"
+name: "Deploy"
 
 on:
   push:
@@ -11,8 +11,6 @@ jobs:
       ARM_ACCESS_KEY: ${{ secrets.ARM_ACCESS_KEY }}
     name: "Terraform"
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -44,3 +42,45 @@ jobs:
         id: apply
         run: terraform apply -auto-approve -input=false
         working-directory: ./terraform
+
+      - name: Logout
+        run: |
+          az logout
+
+  deploy:
+    env:
+      AZURE_WEBAPP_NAME: mandelbrot-function-app
+      AZURE_WEBAPP_PACKAGE_PATH: "."
+      DOTNET_VERSION: "6.0.x"
+    needs: terraform
+    name: "Build and Deploy"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Build
+        run: |
+          dotnet restore
+          dotnet build --configuration Release
+          dotnet publish '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestrator/MandelbrotOrchestrator.csproj' -c Release -o '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestratorBuild'
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: "Deploy Function"
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestratorBuild"
+
+      - name: Logout
+        run: |
+          az logout
