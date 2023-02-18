@@ -1,7 +1,7 @@
 RESOURCE_GROUP_NAME=tfstateresources
-STORAGE_ACCOUNT_NAME=ngtfstatemandelbrot
+STORAGE_ACCOUNT_NAME=ngtfstate21823
 CONTAINER_NAME=tfstate
-KEY_VAULT_NAME=nathangbuildsecrets
+KEY_VAULT_NAME=nathangbuildvault21823
 az group create --name $RESOURCE_GROUP_NAME --location westus
 az group create --name $RESOURCE_GROUP_NAME --location westus
 az storage account create --resource-group $RESOURCE_GROUP_NAME --name $STORAGE_ACCOUNT_NAME --sku Standard_LRS --encryption-services blob
@@ -12,10 +12,12 @@ az keyvault secret set --vault-name $KEY_VAULT_NAME --name tf-backend-key --valu
 
 SERVICE_PRINCIPAL_NAME=nathanbacongithubsp
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-OUTPUTJSON=$(az ad sp create-for-rbac --name $SERVICE_PRINCIPAL_NAME --role contributor --scopes /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP_NAME --sdk-auth)
+OUTPUTJSON=$(az ad sp create-for-rbac --name $SERVICE_PRINCIPAL_NAME --role contributor --scopes /subscriptions/$SUBSCRIPTION_ID --sdk-auth)
+# az role assignment create --assignee $SERVICE_PRINCIPAL_NAME --role Reader --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/mandelbrotresources
 echo $OUTPUTJSON
 CLIENT_ID=$(echo "$OUTPUTJSON" | jq -r '.clientId')
 CLIENT_SECRET=$(echo "$OUTPUTJSON" | jq -r '.clientSecret')
 
+az keyvault secret set --vault-name $KEY_VAULT_NAME --name github-sp-clientid --value $OUTPUTJSON > /dev/null
 az keyvault secret set --vault-name $KEY_VAULT_NAME --name github-sp-clientid --value $CLIENT_ID > /dev/null
-az keyvault secret set --vault-name $KEY_VAULT_NAME --name github-sp-clientsecret --value $CLIENT_SECRET > /dev/null
+az keyvault secret set --vault-name $KEY_VAULT_NAME --name github-sp-clientsecret --value '$CLIENT_SECRET' > /dev/null
