@@ -47,17 +47,34 @@ jobs:
         run: |
           az logout
 
-  deploy:
-    env:
-      AZURE_WEBAPP_NAME: mandelbrot-function-app
-      AZURE_WEBAPP_PACKAGE_PATH: "."
-      DOTNET_VERSION: "6.0.x"
-    needs: terraform
-    name: "Build and Deploy"
+  build:
+    name: "Build"
     runs-on: ubuntu-latest
+    env:
+      DOTNET_VERSION: "6.0.x"
+      AZURE_WEBAPP_PACKAGE_PATH: "."
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+
+      - name: Build with Webpack
+        run: |
+          npx webpack --config webpack.config.js
+        working-directory: ./frontend
+
+      - name: Copy frontend
+        run: |
+          mv ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/frontend/dist/index.html ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestrator/content/index.html
 
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v3
@@ -69,6 +86,26 @@ jobs:
           dotnet restore
           dotnet build --configuration Release
           dotnet publish '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestrator/MandelbrotOrchestrator.csproj' -c Release -o '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestratorBuild'
+
+      - name: Publish App
+        uses: actions/upload-artifact@v3
+        with:
+          name: app
+          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestratorBuild/
+
+  deploy:
+    env:
+      AZURE_WEBAPP_NAME: mandelbrot-function-app
+      AZURE_WEBAPP_PACKAGE_PATH: "."
+    needs: [terraform, build]
+    name: "Deploy"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download App Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: app
+          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestratorBuild
 
       - name: Login to Azure
         uses: azure/login@v1

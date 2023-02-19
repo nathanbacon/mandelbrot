@@ -1,0 +1,23 @@
+# Directories
+node_modules/
+dist/
+
+# Files
+*.log
+*.tsbuildinfo
+
+# Editor files
+.vscode/
+*.code-workspace
+
+# Dependency lock files
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Development environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
