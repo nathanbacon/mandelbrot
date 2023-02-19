@@ -1,5 +1,7 @@
 namespace Mandelbrot
 {
+  using SixLabors.ImageSharp;
+  using SixLabors.ImageSharp.PixelFormats;
   using Color = System.ValueTuple<byte, byte, byte>;
 
   public struct ComputeParameters
@@ -84,6 +86,32 @@ namespace Mandelbrot
 
         return image;
       });
+    }
+
+    public async Task<string> BuildPngAsBase64(ComputeParameters parameters)
+    {
+      (int width, int height) = (parameters.Width, parameters.Height);
+      var imageBytes = await BuildImage(parameters);
+      using Image<Rgba32> image = new(width, height);
+      string s = "";
+      await Task.Run(() =>
+      {
+        for (int x = 0; x < width; x++)
+        {
+          for (int y = 0; y < height; y++)
+          {
+            (byte r, byte g, byte b) = imageBytes[x, y];
+            image[x, y] = new Rgba32(r, g, b);
+          }
+        }
+
+        using MemoryStream stream = new();
+        image.SaveAsPng(stream);
+        var bytes = stream.ToArray();
+        s = Convert.ToBase64String(bytes);
+      });
+
+      return s;
     }
   }
 }
