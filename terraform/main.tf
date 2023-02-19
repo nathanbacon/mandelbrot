@@ -41,20 +41,6 @@ resource "azurerm_service_plan" "mandelbrot_functions" {
   sku_name            = "Y1"
 }
 
-resource "azurerm_linux_function_app" "mandlebrot_function_app" {
-  name                = "mandelbrot-function-app"
-  resource_group_name = azurerm_resource_group.mandelbrot.name
-  location            = azurerm_resource_group.mandelbrot.location
-
-  storage_account_name       = azurerm_storage_account.function_storage.name
-  storage_account_access_key = azurerm_storage_account.function_storage.primary_access_key
-  service_plan_id            = azurerm_service_plan.mandelbrot_functions.id
-
-  site_config {
-
-  }
-}
-
 resource "azurerm_signalr_service" "signalr" {
   name                = "mandelbrot-ng-signalr"
   location            = azurerm_resource_group.mandelbrot.location
@@ -67,5 +53,23 @@ resource "azurerm_signalr_service" "signalr" {
 
   connectivity_logs_enabled = true
   messaging_logs_enabled    = true
-  service_mode              = "Default"
+  service_mode              = "Serverless"
+}
+
+resource "azurerm_linux_function_app" "mandlebrot_function_app" {
+  name                = "mandelbrot-function-app"
+  resource_group_name = azurerm_resource_group.mandelbrot.name
+  location            = azurerm_resource_group.mandelbrot.location
+
+  storage_account_name       = azurerm_storage_account.function_storage.name
+  storage_account_access_key = azurerm_storage_account.function_storage.primary_access_key
+  service_plan_id            = azurerm_service_plan.mandelbrot_functions.id
+
+  site_config {
+
+  }
+
+  app_settings = {
+    "AzureSignalRConnectionString" = "${azurerm_signalr_service.signalr.primary_connection_string}"
+  }
 }

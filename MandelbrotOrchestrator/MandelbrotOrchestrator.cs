@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using Microsoft.Extensions.Logging;
 
 namespace MandelbrotOrchestrator
@@ -27,6 +27,13 @@ namespace MandelbrotOrchestrator
       };
     }
 
+    [FunctionName("negotiate")]
+    public static SignalRConnectionInfo Negotiate(
+        [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req,
+        [SignalRConnectionInfo(HubName = "serverless")] SignalRConnectionInfo connectionInfo)
+    {
+      return connectionInfo;
+    }
 
     [FunctionName("MandelbrotOrchestrator")]
     public static async Task<List<string>> RunOrchestrator(
@@ -46,9 +53,10 @@ namespace MandelbrotOrchestrator
     }
 
     [FunctionName(nameof(SayHello))]
-    public static string SayHello([ActivityTrigger] string name, ILogger log)
+    public static string SayHello([ActivityTrigger] string name, ILogger log, [SignalR(HubName = "serverless")] IAsyncCollector<SignalRMessage> signalRMessages)
     {
       log.LogInformation($"Saying hello to {name}.");
+      PublishMessage(signalRMessages, name);
       return $"Hello {name}!";
     }
 
@@ -64,6 +72,17 @@ namespace MandelbrotOrchestrator
       log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
 
       return starter.CreateCheckStatusResponse(req, instanceId);
+    }
+
+    private static async void PublishMessage(IAsyncCollector<SignalRMessage> signalRMessages, string message)
+    {
+      await signalRMessages.AddAsync(
+        new SignalRMessage
+        {
+          Target = "newMessage",
+          Arguments = new[] { message }
+        }
+      );
     }
   }
 }
