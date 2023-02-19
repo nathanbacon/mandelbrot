@@ -4,7 +4,7 @@ namespace Mandelbrot
   using SixLabors.ImageSharp.PixelFormats;
   using Color = System.ValueTuple<byte, byte, byte>;
 
-  public struct ComputeParameters
+  public class ComputeParameters
   {
     public double MinX { get; }
     public double MaxX { get; }

@@ -3,6 +3,7 @@ const InlineSourceWebpackPlugin = require("inline-source-webpack-plugin");
 
 module.exports = {
   entry: "./src/index.ts",
+  devtool: "source-map",
   module: {
     rules: [
       {
