@@ -74,6 +74,7 @@ jobs:
 
       - name: Copy frontend
         run: |
+          mkdir ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestrator/content
           mv ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/frontend/dist/index.html ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/MandelbrotOrchestrator/content/index.html
 
       - name: Setup .NET Core SDK
