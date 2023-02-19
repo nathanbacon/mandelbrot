@@ -10,7 +10,5 @@
     "sourceMap": true,
     "outDir": "dist"
   },
-  "include": [
-    "index.ts"
-  ]
+  "include": ["./src/**/*.ts"]
 }
