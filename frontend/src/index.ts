@@ -54,7 +54,7 @@ const connect = (channelName: string) => {
     if (ctx) {
       const [x, y] = mapMandelbrotSpaceToCanvas(
         parameters.MinX,
-        parameters.MinY
+        parameters.MaxY
       );
       console.log(`drawing on (${x}, ${y})`);
       const img = new Image();
@@ -63,6 +63,9 @@ const connect = (channelName: string) => {
         ctx.drawImage(img, x, y);
       };
       img.src = `data:image/png;base64,${image}`;
+      document
+        .getElementById("testImage")
+        ?.setAttribute("src", `data:image/png;base64,${image}`);
     }
   });
 
@@ -71,6 +74,8 @@ const connect = (channelName: string) => {
 
 (() => {
   const canvas = document.getElementById("theCanvas") as HTMLCanvasElement;
+  canvas.width = 1000;
+  canvas.height = 1000;
   const ctx = canvas.getContext("2d");
   if (ctx) {
     ctx.fillStyle = "black";
