@@ -49,7 +49,7 @@ namespace Mandelbrot
       return count;
     }
 
-    public Color[,] BuildImage(ComputeParameters parameters)
+    public async Task<Color[,]> BuildImage(ComputeParameters parameters)
     {
       (int width, int height) = (parameters.Width, parameters.Height);
       (double minX, double maxX) = (parameters.MinX, parameters.MaxX);
@@ -58,29 +58,32 @@ namespace Mandelbrot
 
       var image = new Color[width, height];
 
-      for (int x = 0; x < width; x++)
+      return await Task.Run(() =>
       {
-        for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
         {
-          double cx = (double)x / width * (maxX - minX) + minX;
-          double cy = (double)y / height * (maxY - minY) + minY;
-
-          int count = Compute(cx, cy, maxIterations);
-
-          Color color = (0, 0, 0);
-          if (count > 0)
+          for (int y = 0; y < height; y++)
           {
-            byte r = (byte)(count % 256);
-            byte g = (byte)((count / 256) % 256);
-            byte b = (byte)((count / 65535) % 256);
-            color = (r, g, b);
+            double cx = (double)x / width * (maxX - minX) + minX;
+            double cy = (double)y / height * (maxY - minY) + minY;
+
+            int count = Compute(cx, cy, maxIterations);
+
+            Color color = (0, 0, 0);
+            if (count > 0)
+            {
+              byte r = (byte)(count % 256);
+              byte g = (byte)((count / 256) % 256);
+              byte b = (byte)((count / 65535) % 256);
+              color = (r, g, b);
+            }
+
+            image[x, y] = color;
           }
-
-          image[x, y] = color;
         }
-      }
 
-      return image;
+        return image;
+      });
     }
   }
 }
