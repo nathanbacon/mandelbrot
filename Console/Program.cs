@@ -4,8 +4,8 @@ using Mandelbrot;
 
 int width = 10000;
 int height = 10000;
-MandelbrotBuilder mb = new(maxIterations: 1000, limit: 4.0);
-ComputeParameters computeParameters = new(width: width, height: height, minX: -2.0, maxX: 1.0, minY: -1.5, maxY: 1.5);
+MandelbrotBuilder mb = new(limit: 4.0);
+ComputeParameters computeParameters = new(width: width, height: height, minX: -2.0, maxX: 1.0, minY: -1.5, maxY: 1.5, maxIterations: 256);
 var imageBytes = mb.BuildImage(computeParameters);
 
 using (Image<Rgba32> image = new(width, height))
