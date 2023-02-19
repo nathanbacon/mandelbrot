@@ -1,17 +1,24 @@
 import * as signalR from "@microsoft/signalr";
 
-const apiBaseUrl = window.location.origin + "/api";
-const connection = new signalR.HubConnectionBuilder()
-  .withUrl(apiBaseUrl)
-  .configureLogging(signalR.LogLevel.Information)
-  .build();
-connection.on("newMessage", (message) => {
-  console.log("the message is: " + message);
-});
+interface OrchestratorResponse {
+  id: string;
+}
 
-console.log("hello, world");
+console.log("hello world");
 
-//connection.start().catch(console.error);
+const connect = (channelName: string) => {
+  const apiBaseUrl = window.location.origin + "/api";
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl(apiBaseUrl)
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+  connection.on(channelName, (image, parameters) => {
+    console.log(image);
+    console.log(parameters);
+  });
+
+  connection.start().catch(console.error);
+};
 
 (() => {
   const canvas = document.getElementById("theCanvas") as HTMLCanvasElement;
@@ -20,4 +27,15 @@ console.log("hello, world");
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
+
+  const startButton = document.getElementById(
+    "startButton"
+  ) as HTMLButtonElement;
+
+  startButton.addEventListener("click", async () => {
+    const response = await fetch("MandelbrotOrchestrator_HttpStart");
+    var orchestratorResponse = (await response.json()) as OrchestratorResponse;
+
+    connect(orchestratorResponse.id);
+  });
 })();

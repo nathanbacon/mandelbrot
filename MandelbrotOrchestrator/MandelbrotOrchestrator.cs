@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -14,6 +14,18 @@ using Microsoft.Extensions.Logging;
 
 namespace MandelbrotOrchestrator
 {
+  public struct ComputeTask
+  {
+    public ComputeParameters ComputeParameters { get; }
+    public string InstanceId { get; }
+
+    public ComputeTask(ComputeParameters computeParameters, string instanceId)
+    {
+      ComputeParameters = computeParameters;
+      InstanceId = instanceId;
+    }
+  }
+
   public static class MandelbrotOrchestrator
   {
 
@@ -37,26 +49,32 @@ namespace MandelbrotOrchestrator
     }
 
     [FunctionName("MandelbrotOrchestrator")]
-    public static void RunOrchestrator(
-        [OrchestrationTrigger] IDurableOrchestrationContext context)
+    public static async Task RunOrchestrator(
+      [OrchestrationTrigger] IDurableOrchestrationContext context)
     {
       // Replace "hello" with the name of your Durable Activity Function.
       //outputs.Add(await context.CallActivityAsync<string>(nameof(SayHello), "Tokyo"));
       //DateTime dateTime = context.CurrentUtcDateTime.AddSeconds(15);
       //await context.CreateTimer(dateTime, cancelToken: System.Threading.CancellationToken.None);
+      int width = 1000;
+      int height = 1000;
+      ComputeParameters computeParameters = new(width: width, height: height, minX: -2.0, maxX: 1.0, minY: -1.5, maxY: 1.5, maxIterations: 10000);
+      ComputeTask computeTask = new(computeParameters, context.InstanceId);
+      await context.CallActivityAsync(nameof(ComputeMandelbrot), computeTask);
     }
 
-    public static async void ComputeMandelbrot(
-      [ActivityTrigger] ComputeParameters computeParameters,
+    [FunctionName("ComputeMandelbrot")]
+    public static async Task ComputeMandelbrot(
+      [ActivityTrigger] ComputeTask computeTask,
       [SignalR(HubName = "serverless")] IAsyncCollector<SignalRMessage> signalRMessages
       )
     {
       MandelbrotBuilder mandelbrot = new();
-      string pngBase64 = await mandelbrot.BuildPngAsBase64(computeParameters);
+      string pngBase64 = await mandelbrot.BuildPngAsBase64(computeTask.ComputeParameters);
       await signalRMessages.AddAsync(new SignalRMessage
       {
-        Target = "mandelbrottarget",
-        Arguments = new[] { pngBase64 },
+        Target = computeTask.InstanceId,
+        Arguments = new[] { pngBase64, (object)computeTask.ComputeParameters },
       });
     }
 
