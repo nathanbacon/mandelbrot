@@ -54,3 +54,18 @@ resource "azurerm_linux_function_app" "mandlebrot_function_app" {
 
   }
 }
+
+resource "azurerm_signalr_service" "signalr" {
+  name                = "mandelbrot-ng-signalr"
+  location            = azurerm_resource_group.mandelbrot.location
+  resource_group_name = azurerm_resource_group.mandelbrot.name
+
+  sku {
+    name     = "Free_F1"
+    capacity = 1
+  }
+
+  connectivity_logs_enabled = true
+  messaging_logs_enabled    = true
+  service_mode              = "Default"
+}
