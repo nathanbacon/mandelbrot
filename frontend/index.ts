@@ -11,4 +11,13 @@ connection.on("newMessage", (message) => {
 
 console.log("hello, world");
 
-connection.start().catch(console.error);
+//connection.start().catch(console.error);
+
+(() => {
+  const canvas = document.getElementById("theCanvas") as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "black";
+    ctx.fillRect(10, 10, 150, 100);
+  }
+})();

@@ -1,11 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>My TypeScript HTML Page</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+      crossorigin="anonymous"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
   <body>
-    <h1>Hello from TypeScript!</h1>
-    <ul id="messages"></ul>
+    <div class="container">
+      <h1>Hello from TypeScript!</h1>
+      <div class="row">
+        <div class="col">
+          <canvas id="theCanvas"></canvas>
+        </div>
+      </div>
+      <ul id="messages"></ul>
+    </div>
     <script inline inline-asset="bundle.js" inline-asset-delete></script>
   </body>
 </html>
