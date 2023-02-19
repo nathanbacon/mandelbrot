@@ -25,4 +25,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Mandelbrot\Mandelbrot.csproj" />
+  </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Mandelbrot;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -36,20 +37,27 @@ namespace MandelbrotOrchestrator
     }
 
     [FunctionName("MandelbrotOrchestrator")]
-    public static async Task<List<string>> RunOrchestrator(
+    public static void RunOrchestrator(
         [OrchestrationTrigger] IDurableOrchestrationContext context)
     {
-      var outputs = new List<string>();
-
       // Replace "hello" with the name of your Durable Activity Function.
-      outputs.Add(await context.CallActivityAsync<string>(nameof(SayHello), "Tokyo"));
-      DateTime dateTime = context.CurrentUtcDateTime.AddSeconds(15);
-      await context.CreateTimer(dateTime, cancelToken: System.Threading.CancellationToken.None);
-      outputs.Add(await context.CallActivityAsync<string>(nameof(SayHello), "Seattle"));
-      outputs.Add(await context.CallActivityAsync<string>(nameof(SayHello), "London"));
+      //outputs.Add(await context.CallActivityAsync<string>(nameof(SayHello), "Tokyo"));
+      //DateTime dateTime = context.CurrentUtcDateTime.AddSeconds(15);
+      //await context.CreateTimer(dateTime, cancelToken: System.Threading.CancellationToken.None);
+    }
 
-      // returns ["Hello Tokyo!", "Hello Seattle!", "Hello London!"]
-      return outputs;
+    public static async void ComputeMandelbrot(
+      [ActivityTrigger] ComputeParameters computeParameters,
+      [SignalR(HubName = "serverless")] IAsyncCollector<SignalRMessage> signalRMessages
+      )
+    {
+      MandelbrotBuilder mandelbrot = new();
+      string pngBase64 = await mandelbrot.BuildPngAsBase64(computeParameters);
+      await signalRMessages.AddAsync(new SignalRMessage
+      {
+        Target = "mandelbrottarget",
+        Arguments = new[] { pngBase64 },
+      });
     }
 
     [FunctionName(nameof(SayHello))]
