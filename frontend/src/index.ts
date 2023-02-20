@@ -47,8 +47,6 @@ const connect = (channelName: string) => {
     .configureLogging(signalR.LogLevel.Information)
     .build();
   connection.on(channelName, (image: string, parameters: ComputeParameters) => {
-    console.log(image);
-    console.log(parameters);
     const canvas = document.getElementById("theCanvas") as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     if (ctx) {
@@ -56,16 +54,11 @@ const connect = (channelName: string) => {
         parameters.MinX,
         parameters.MaxY
       );
-      console.log(`drawing on (${x}, ${y})`);
       const img = new Image();
       img.onload = () => {
-        console.log("drawing");
         ctx.drawImage(img, x, y);
       };
       img.src = `data:image/png;base64,${image}`;
-      document
-        .getElementById("testImage")
-        ?.setAttribute("src", `data:image/png;base64,${image}`);
     }
   });
 
@@ -74,8 +67,7 @@ const connect = (channelName: string) => {
 
 (() => {
   const canvas = document.getElementById("theCanvas") as HTMLCanvasElement;
-  canvas.width = 1000;
-  canvas.height = 1000;
+  canvas.onmousedown = onMouseDown;
   const ctx = canvas.getContext("2d");
   if (ctx) {
     ctx.fillStyle = "black";
@@ -87,9 +79,48 @@ const connect = (channelName: string) => {
   ) as HTMLButtonElement;
 
   startButton.addEventListener("click", async () => {
-    const response = await fetch("MandelbrotOrchestrator_HttpStart");
+    const { MinX, MaxX, MinY, MaxY } = myFrame;
+    const route = `start/${MinX}/${MaxX}/${MinY}/${MaxY}/${2500}`;
+    const response = await fetch(route);
     var orchestratorResponse = (await response.json()) as OrchestratorResponse;
 
     connect(orchestratorResponse.id);
   });
+
+  const squareCanvas = document.getElementById(
+    "squareCanvas"
+  ) as HTMLCanvasElement;
+  const squareCtx = squareCanvas.getContext("2d");
+
+  squareCanvas.onmousedown = onMouseDown;
+  squareCanvas.onmousemove = onMouseMove;
+  squareCanvas.onmouseup = onMouseUp;
+
+  var origin: [number, number] | null = null;
+  function onMouseDown(event: MouseEvent) {
+    origin = [event.offsetX, event.offsetY];
+  }
+
+  function onMouseMove(event: MouseEvent) {
+    if (!origin) return;
+
+    console.log(event);
+    if (event.offsetX != -34234234) return;
+
+    const [ox, oy] = origin;
+    const { offsetX: x, offsetY: y } = event;
+
+    const dist = Math.sqrt(Math.pow(x - ox, 2) + Math.pow(y - oy, 2));
+
+    const topLeftY = oy - dist;
+    if (topLeftY < 0) return;
+
+    squareCtx?.clearRect(0, 0, squareCanvas.width, squareCanvas.height);
+
+    squareCtx?.strokeRect(ox, topLeftY, ox + dist, topLeftY + dist);
+  }
+
+  function onMouseUp() {
+    origin = null;
+  }
 })();

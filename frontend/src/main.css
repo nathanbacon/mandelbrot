@@ -1,4 +1,13 @@
 canvas {
   height: 1000px;
   width: 1000px;
+  position: absolute;
+}
+
+#theCanvas {
+  z-index: 1;
+}
+
+#squareCanvas {
+  z-index: 2;
 }
